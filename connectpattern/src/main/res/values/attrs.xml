@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ConnectPatternView">
+        <attr name="connectPatternNumber" format="enum">
+            <enum name="two" value="2" />
+            <enum name="three" value="3" />
+            <enum name="five" value="5" />
+            <enum name="nine" value="9" />
+        </attr>
+        <attr name="connectPatternCircleColor" format="color" />
+        <attr name="connectPatternCircleRadius" format="dimension" />
+        <attr name="connectPatternLineColor" format="color" />
+        <attr name="connectPatternLineWidth" format="dimension" />
+        <attr name="connectPatternDrawable" format="reference" />
+    </declare-styleable>
+</resources>
