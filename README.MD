@@ -15,7 +15,7 @@ Widget can be animated in and out.
 
 ## Adding it to your project
 
-    compile 'com.bcgdv.asia.lib:connectpattern:0.1'
+    compile 'com.bcgdv.asia.lib:connectpattern:0.2'
     
 ## Usage
 
@@ -29,6 +29,7 @@ Widget can be animated in and out.
     android:layout_height="350dp"
     android:layout_centerVertical="true"
     android:layout_centerHorizontal="true"
+    app:connectPatternAnimationType="none|middle|bottom"
     app:connectPatternNumber="nine"
     app:connectPatternCircleColor="@color/colorPrimary"
     app:connectPatternLineColor="@color/colorAccent"
@@ -37,6 +38,7 @@ Widget can be animated in and out.
     app:connectPatternDrawable="@mipmap/ic_star"/>
 ```
 
+- `app:connectPatternAnimationType` (Optional) - `none|middle|bottom`. Default `middle`
 - `app:connectPatternNumber` (Optional) - determines how many connectors will be used
 - `app:connectPatternCircleColor` (Optional) - color of the circle
 - `app:connectPatternCircleRadius` (Optional) - radius of the circle

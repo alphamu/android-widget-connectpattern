@@ -13,8 +13,11 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
@@ -27,6 +30,9 @@ import java.util.List;
 public class ConnectPatternView extends View {
 
     private final long ANIMATION_DURATION = 300;
+    private final int ANIMATION_TYPE_NONE = 0;
+    private final int ANIMATION_TYPE_MIDDLE = 1;
+    private final int ANIMATION_TYPE_BOTTOM = 2;
     private int numbersOfConnectors = 9;
     private int circleColor = Color.BLACK;
     private int lineColor = Color.LTGRAY;
@@ -34,6 +40,7 @@ public class ConnectPatternView extends View {
     private int radius = 14; //in dp
     private int diameter = 28; //in dp
     private int dp48 = 48; //in dp
+    private int animationType = ANIMATION_TYPE_MIDDLE;
     private Drawable drawable;
 
     private int leftX;
@@ -125,6 +132,7 @@ public class ConnectPatternView extends View {
             lineColor = typedArray.getColor(R.styleable.ConnectPatternView_connectPatternLineColor, lineColor);
             lineWidth = (int) typedArray.getDimension(R.styleable.ConnectPatternView_connectPatternLineWidth, lineWidth);
             drawable = typedArray.getDrawable(R.styleable.ConnectPatternView_connectPatternDrawable);
+            animationType = typedArray.getInt(R.styleable.ConnectPatternView_connectPatternAnimationType, animationType);
         } finally {
             typedArray.recycle();
         }
@@ -344,6 +352,42 @@ public class ConnectPatternView extends View {
             return;
         }
 
+        List<Animator> animators = (animationType == ANIMATION_TYPE_MIDDLE)?
+                                            animateInFromMiddle() : animateInFromBottom();
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(animators);
+        set.setDuration(animationType == ANIMATION_TYPE_NONE? 0 : ANIMATION_DURATION);
+        set.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                setEnabled(false);
+                setVisibility(VISIBLE);
+                if (mPatternListener != null) {
+                    mPatternListener.animateInStart();
+                }
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                setEnabled(true);
+                if (mPatternListener != null) {
+                    mPatternListener.animateInEnd();
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+            }
+        });
+        set.setStartDelay(delay);
+        set.start();
+    }
+
+    private List<Animator> animateInFromMiddle() {
         List<Animator> animators = new ArrayList<>();
 
         for (int i = 0; i < indexes.length; i++) {
@@ -382,40 +426,40 @@ public class ConnectPatternView extends View {
             }.init(circles[circleNumber]));
             animators.add(topAnim);
         }
+        return animators;
+    }
 
-        AnimatorSet set = new AnimatorSet();
-        set.playTogether(animators);
-        set.setDuration(ANIMATION_DURATION);
-        set.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                setEnabled(false);
-                setVisibility(VISIBLE);
-                if (mPatternListener != null) {
-                    mPatternListener.animateInStart();
+    private List<Animator> animateInFromBottom() {
+        List<Animator> animators = new ArrayList<>();
+        int height = getHeight();
+        if (height <= 0) {
+            height = getResources().getDisplayMetrics().heightPixels;
+        }
+        for (int i = 0; i < indexes.length; i++) {
+            int circleNumber = indexes[i];
+            int originalTop = circles[circleNumber].top;
+            circles[circleNumber].top = height;
+            circles[circleNumber].bottom = height + diameter;
+            ValueAnimator topAnim = ValueAnimator.ofInt(height, originalTop);
+            topAnim.setInterpolator(new DecelerateInterpolator());
+            topAnim.setStartDelay((ANIMATION_DURATION / indexes.length) * (i%3));
+            topAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                Rect circle = null;
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    int top = (Integer) animation.getAnimatedValue();
+                    circle.top = top;
+                    circle.bottom = top + diameter;
+                    invalidate();
                 }
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                setEnabled(true);
-                if (mPatternListener != null) {
-                    mPatternListener.animateInEnd();
+                public ValueAnimator.AnimatorUpdateListener init(Rect rect) {
+                    circle = rect;
+                    return this;
                 }
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
-        set.setStartDelay(delay);
-        set.start();
+            }.init(circles[circleNumber]));
+            animators.add(topAnim);
+        }
+        invalidate();
+        return animators;
     }
 
     /**
@@ -439,52 +483,11 @@ public class ConnectPatternView extends View {
             return;
         }
 
-        List<Animator> animators = new ArrayList<>();
-
-        for (int i = 0; i < indexes.length; i++) {
-            final int circleNumber = indexes[i];
-            ValueAnimator leftAnim = ValueAnimator.ofInt(circles[circleNumber].left, circles[4].left);
-            leftAnim.setInterpolator(new DecelerateInterpolator());
-            leftAnim.setStartDelay((ANIMATION_DURATION / indexes.length) * i);
-            leftAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                Rect circle = null;
-
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    int left = (Integer) animation.getAnimatedValue();
-                    circle.left = left;
-                    circle.right = left + diameter;
-                }
-
-                public ValueAnimator.AnimatorUpdateListener init(Rect rect) {
-                    circle = rect;
-                    return this;
-                }
-            }.init(circles[circleNumber]));
-            animators.add(leftAnim);
-
-            ValueAnimator topAnim = ValueAnimator.ofInt(circles[circleNumber].top, circles[4].top);
-            topAnim.setInterpolator(new DecelerateInterpolator());
-            topAnim.setStartDelay((ANIMATION_DURATION / indexes.length) * i);
-            topAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                Rect circle = null;
-                @Override
-                public void onAnimationUpdate(ValueAnimator animation) {
-                    int top = (Integer) animation.getAnimatedValue();
-                    circle.top = top;
-                    circle.bottom = top + diameter;
-                    invalidate();
-                }
-                public ValueAnimator.AnimatorUpdateListener init(Rect rect) {
-                    circle = rect;
-                    return this;
-                }
-            }.init(circles[circleNumber]));
-            animators.add(topAnim);
-        }
-
+        List<Animator> animators = (animationType == ANIMATION_TYPE_MIDDLE)?
+            animateOutToMiddle() : animateOutToBottom();
         AnimatorSet set = new AnimatorSet();
         set.playTogether(animators);
+        set.setDuration(animationType == ANIMATION_TYPE_NONE? 0 : ANIMATION_DURATION);
         set.setStartDelay(delay);
         set.start();
         set.addListener(new Animator.AnimatorListener() {
@@ -515,6 +518,88 @@ public class ConnectPatternView extends View {
 
             }
         });
+    }
+
+    private List<Animator> animateOutToBottom() {
+        List<Animator> animators = new ArrayList<>();
+        int height = getHeight();
+        if (height <= 0) {
+            height = getResources().getDisplayMetrics().heightPixels;
+        }
+        int totalLength = indexes.length;
+        for (int i = 0; i < totalLength; i++) {
+            int circleNumber = indexes[i];
+            ValueAnimator topAnim = ValueAnimator.ofInt(circles[circleNumber].top, height);
+            topAnim.setInterpolator(new AccelerateInterpolator());
+            if (animationType != ANIMATION_TYPE_NONE) {
+                topAnim.setStartDelay((ANIMATION_DURATION / indexes.length) * (i%3));
+            }
+            topAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                Rect circle = null;
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    int top = (Integer) animation.getAnimatedValue();
+                    circle.top = top;
+                    circle.bottom = top + diameter;
+                    invalidate();
+                }
+                public ValueAnimator.AnimatorUpdateListener init(Rect rect) {
+                    circle = rect;
+                    return this;
+                }
+            }.init(circles[circleNumber]));
+            animators.add(topAnim);
+        }
+        return animators;
+    }
+
+    private List<Animator> animateOutToMiddle() {
+        List<Animator> animators = new ArrayList<>();
+        for (int i = 0; i < indexes.length; i++) {
+            final int circleNumber = indexes[i];
+            ValueAnimator leftAnim = ValueAnimator.ofInt(circles[circleNumber].left, circles[4].left);
+            leftAnim.setInterpolator(new DecelerateInterpolator());
+            if (animationType != ANIMATION_TYPE_NONE) {
+                leftAnim.setStartDelay((ANIMATION_DURATION / indexes.length) * i);
+            }
+            leftAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                Rect circle = null;
+
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    int left = (Integer) animation.getAnimatedValue();
+                    circle.left = left;
+                    circle.right = left + diameter;
+                }
+
+                public ValueAnimator.AnimatorUpdateListener init(Rect rect) {
+                    circle = rect;
+                    return this;
+                }
+            }.init(circles[circleNumber]));
+            animators.add(leftAnim);
+
+            ValueAnimator topAnim = ValueAnimator.ofInt(circles[circleNumber].top, circles[4].top);
+            topAnim.setInterpolator(new DecelerateInterpolator());
+            if (animationType != ANIMATION_TYPE_NONE) {
+                topAnim.setStartDelay((ANIMATION_DURATION / indexes.length) * i);
+            }
+            topAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                Rect circle = null;
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    int top = (Integer) animation.getAnimatedValue();
+                    circle.top = top;
+                    circle.bottom = top + diameter;
+                    invalidate();
+                }
+                public ValueAnimator.AnimatorUpdateListener init(Rect rect) {
+                    circle = rect;
+                    return this;
+                }
+            }.init(circles[circleNumber]));
+            animators.add(topAnim);
+        }
+        return animators;
     }
 
     /**
