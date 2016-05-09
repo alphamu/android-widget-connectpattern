@@ -12,5 +12,10 @@
         <attr name="connectPatternLineColor" format="color" />
         <attr name="connectPatternLineWidth" format="dimension" />
         <attr name="connectPatternDrawable" format="reference" />
+        <attr name="connectPatternAnimationType" format="enum">
+            <enum name="none" value="0" />
+            <enum name="middle" value="1" />
+            <enum name="bottom" value="2" />
+        </attr>
     </declare-styleable>
 </resources>
