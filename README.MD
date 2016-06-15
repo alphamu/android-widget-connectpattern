@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/BCGDV-ASIA/android-widget-connectpattern.svg?branch=master)](https://travis-ci.org/BCGDV-ASIA/android-widget-connectpattern) 
+[ ![Download](https://api.bintray.com/packages/bcgdv/android/connectpattern/images/download.svg) ](https://bintray.com/bcgdv/android/connectpattern/_latestVersion) 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ConnectPatternView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/3607) 
+
 # ConnectPatternView
 
 A widget that can be used to confirm the user's action, unlocking the screen etc. by providing the desired pattern with specified configuration.
