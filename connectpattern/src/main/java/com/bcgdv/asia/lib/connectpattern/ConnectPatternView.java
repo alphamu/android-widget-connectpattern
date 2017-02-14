@@ -13,11 +13,9 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
@@ -322,10 +320,17 @@ public class ConnectPatternView extends View {
      * @param event
      */
     private void setTouchPoint(MotionEvent event) {
-        touchPoint.left = (int) event.getX();
-        touchPoint.top = (int) event.getY();
-        touchPoint.bottom = touchPoint.top + dp48;
-        touchPoint.right = touchPoint.left + dp48;
+        int touchPointWidth = lineWidth;
+        int dp4 = dp48/12;
+        //ensure touch point width is at least 4dp
+        if (touchPointWidth < dp4) {
+            touchPointWidth = dp4;
+        }
+
+        touchPoint.top = (int) event.getY() - touchPointWidth;
+        touchPoint.left = (int) event.getX() - touchPointWidth;
+        touchPoint.bottom = (int) event.getY() + touchPointWidth;
+        touchPoint.right = (int) event.getX() + touchPointWidth;
     }
 
     /**
