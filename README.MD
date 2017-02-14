@@ -19,7 +19,7 @@ Widget can be animated in and out.
 
 ## Adding it to your project
 
-    compile 'com.bcgdv.asia.lib:connectpattern:0.2'
+    compile 'com.bcgdv.asia.lib:connectpattern:0.2.1'
     
 ## Usage
 
